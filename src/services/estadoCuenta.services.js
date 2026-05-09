@@ -1,11 +1,12 @@
-// Fase en desarrollo — conectar a estadoCuenta.model.js cuando la BD esté lista
+const estadoCuentaModel = require("../models/estadoCuenta.model");
 
 const getAll = async (user) => {
+  const entries = await estadoCuentaModel.findAllByUserId(user.id);
   return {
     success: true,
-    message: "Módulo de estado de cuenta — Fase en desarrollo.",
-    data: [],
+    message: "Estado de cuenta obtenido correctamente.",
+    data: entries,
   };
 };
 
-module.exports = { getAll };
+module.exports = { getAll }; 

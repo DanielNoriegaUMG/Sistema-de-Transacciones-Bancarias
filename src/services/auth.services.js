@@ -1,37 +1,51 @@
-// ── Usuario de prueba (MVP sin BD) ────────────────────────────
-// Cuando se conecte la BD, reemplazar esta constante por una consulta a auth.model.js usando el pool de PostgreSQL.
-const TEST_USER = {
-  id: 1,
-  username: "admin",
-  password: "admin123",
-  name: "Administrador",
-  email: "admin@banco.com",
-  role: "admin",
-};
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const authModel = require("../models/auth.model");
 
-const SIMULATED_TOKEN = "simulated-token-admin";
+const JWT_SECRET = process.env.JWT_SECRET || "banco_secret_dev_key";
 
 const login = async (username, password) => {
-  // ── Fase MVP: validación en memoria ──────────────────────────
-  if (username === TEST_USER.username && password === TEST_USER.password) {
+  const user = await authModel.findByUsername(username);
+
+  if (!user) {
     return {
-      success: true,
-      message: "Sesión iniciada correctamente.",
-      token: SIMULATED_TOKEN,
-      user: {
-        id: TEST_USER.id,
-        username: TEST_USER.username,
-        name: TEST_USER.name,
-        email: TEST_USER.email,
-        role: TEST_USER.role,
-      },
+      success: false,
+      message: "Credenciales incorrectas. Verifique su usuario y contraseña.",
     };
   }
 
+  const validPassword = await bcrypt.compare(password, user.password_hash);
+  if (!validPassword) {
+    return {
+      success: false,
+      message: "Credenciales incorrectas. Verifique su usuario y contraseña.",
+    };
+  }
+
+  const token = jwt.sign(
+    {
+      id: user.id,
+      username: user.username,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+    JWT_SECRET,
+    { expiresIn: "8h" },
+  );
+
   return {
-    success: false,
-    message: "Credenciales incorrectas. Verifique su usuario y contraseña.",
+    success: true,
+    message: "Sesión iniciada correctamente.",
+    token,
+    user: {
+      id: user.id,
+      username: user.username,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
   };
 };
 
-module.exports = { login };
+module.exports = { login }; 
