@@ -1,17 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-// ── Credenciales de prueba (definidas en el código) ───────────
-const TEST_CREDENTIALS = { username: "admin", password: "admin123" };
-const SIMULATED_TOKEN = "simulated-token-admin";
-const SIMULATED_USER = {
-  id: 1,
-  username: "admin",
-  name: "Administrador",
-  email: "admin@banco.com",
-  role: "admin",
-};
-
 export default function Login() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ username: "", password: "" });
@@ -43,18 +32,28 @@ export default function Login() {
     setLoading(true);
     setError("");
 
-    // Simular latencia de red
-    await new Promise((r) => setTimeout(r, 650));
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(form),
+      });
+      const data = await response.json();
 
-    if (
-      form.username === TEST_CREDENTIALS.username &&
-      form.password === TEST_CREDENTIALS.password
-    ) {
-      localStorage.setItem("banco_token", SIMULATED_TOKEN);
-      localStorage.setItem("banco_user", JSON.stringify(SIMULATED_USER));
+      if (!response.ok || !data.success) {
+        setError(data.message || "Credenciales incorrectas. Verifique su usuario y contraseña.");
+        setLoading(false);
+        return;
+      }
+
+      localStorage.setItem("banco_token", data.token);
+      localStorage.setItem("banco_user", JSON.stringify(data.user));
       navigate("/dashboard", { replace: true });
-    } else {
-      setError("Credenciales incorrectas. Verifique su usuario y contraseña.");
+    } catch (error) {
+      console.error("[Login] submit error:", error);
+      setError("No se pudo conectar con el servidor. Intenta de nuevo.");
       setLoading(false);
     }
   };
