@@ -1,12 +1,13 @@
+// Lógica de negocio para autenticación
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const authModel = require("../models/auth.model");
 
-const JWT_SECRET = process.env.JWT_SECRET || "banco_secret_dev_key";
-
 const login = async (username, password) => {
   const user = await authModel.findByUsername(username);
 
+  // Mismo mensaje para usuario no encontrado y contraseña incorrecta,
+  // evita enumerar usuarios válidos.
   if (!user) {
     return {
       success: false,
@@ -14,8 +15,8 @@ const login = async (username, password) => {
     };
   }
 
-  const validPassword = await bcrypt.compare(password, user.password_hash);
-  if (!validPassword) {
+  const valid = await bcrypt.compare(password, user.password_hash);
+  if (!valid) {
     return {
       success: false,
       message: "Credenciales incorrectas. Verifique su usuario y contraseña.",
@@ -23,15 +24,9 @@ const login = async (username, password) => {
   }
 
   const token = jwt.sign(
-    {
-      id: user.id,
-      username: user.username,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
-    JWT_SECRET,
-    { expiresIn: "8h" },
+    { id: user.id, username: user.username, name: user.name, role: user.role },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || "24h" },
   );
 
   return {
@@ -48,4 +43,4 @@ const login = async (username, password) => {
   };
 };
 
-module.exports = { login }; 
+module.exports = { login };

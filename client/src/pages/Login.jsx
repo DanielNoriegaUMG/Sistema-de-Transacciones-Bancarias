@@ -33,27 +33,26 @@ export default function Login() {
     setError("");
 
     try {
-      const response = await fetch("/api/auth/login", {
+      const res = await fetch("/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: form.username,
+          password: form.password,
+        }),
       });
-      const data = await response.json();
+      const data = await res.json();
 
-      if (!response.ok || !data.success) {
-        setError(data.message || "Credenciales incorrectas. Verifique su usuario y contraseña.");
+      if (data.success) {
+        localStorage.setItem("banco_token", data.token);
+        localStorage.setItem("banco_user", JSON.stringify(data.user));
+        navigate("/dashboard", { replace: true });
+      } else {
+        setError(data.message || "Credenciales incorrectas.");
         setLoading(false);
-        return;
       }
-
-      localStorage.setItem("banco_token", data.token);
-      localStorage.setItem("banco_user", JSON.stringify(data.user));
-      navigate("/dashboard", { replace: true });
-    } catch (error) {
-      console.error("[Login] submit error:", error);
-      setError("No se pudo conectar con el servidor. Intenta de nuevo.");
+    } catch {
+      setError("Error de conexión con el servidor.");
       setLoading(false);
     }
   };
@@ -320,6 +319,8 @@ export default function Login() {
               )}
             </button>
           </form>
+
+          {/* Hint credenciales */}
         </div>
       </div>
 
@@ -580,28 +581,5 @@ const s = {
     borderRadius: "50%",
     display: "inline-block",
     animation: "spin 0.7s linear infinite",
-  },
-  hint: {
-    marginTop: 22,
-    paddingTop: 18,
-    borderTop: "1px solid var(--border)",
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    flexWrap: "wrap",
-  },
-  hintLabel: {
-    fontSize: 12,
-    color: "var(--text-muted)",
-  },
-  hintCode: {
-    fontSize: 12,
-    background: "var(--navy-900)",
-    border: "1px solid var(--border)",
-    borderRadius: 4,
-    padding: "3px 8px",
-    color: "var(--accent-gold)",
-    fontFamily: "monospace",
-    letterSpacing: "0.3px",
   },
 };
