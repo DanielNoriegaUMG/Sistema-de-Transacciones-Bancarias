@@ -1,7 +1,5 @@
-// src/middlewares/auth.middleware.js
+// Middleware que valida el JWT en el header Authorization de rutas protegidas
 const jwt = require("jsonwebtoken");
-
-const JWT_SECRET = process.env.JWT_SECRET || "banco_secret_dev_key";
 
 const authMiddleware = (req, res, next) => {
   try {
@@ -15,23 +13,10 @@ const authMiddleware = (req, res, next) => {
     }
 
     const token = authHeader.split(" ")[1];
-
-    // Token simulado para el MVP (fase de pruebas sin BD)
-    if (token === "simulated-token-admin") {
-      req.user = {
-        id: 1,
-        username: "admin",
-        name: "Administrador",
-        role: "admin",
-      };
-      return next();
-    }
-
-    // Validación de JWT real (fases futuras)
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
     return next();
-  } catch (error) {
+  } catch {
     return res.status(401).json({
       success: false,
       message: "Token inválido o expirado.",

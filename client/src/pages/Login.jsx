@@ -1,17 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-// ── Credenciales de prueba (definidas en el código) ───────────
-const TEST_CREDENTIALS = { username: "admin", password: "admin123" };
-const SIMULATED_TOKEN = "simulated-token-admin";
-const SIMULATED_USER = {
-  id: 1,
-  username: "admin",
-  name: "Administrador",
-  email: "admin@banco.com",
-  role: "admin",
-};
-
 export default function Login() {
   const navigate = useNavigate();
   const [form, setForm] = useState({ username: "", password: "" });
@@ -43,18 +32,27 @@ export default function Login() {
     setLoading(true);
     setError("");
 
-    // Simular latencia de red
-    await new Promise((r) => setTimeout(r, 650));
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: form.username,
+          password: form.password,
+        }),
+      });
+      const data = await res.json();
 
-    if (
-      form.username === TEST_CREDENTIALS.username &&
-      form.password === TEST_CREDENTIALS.password
-    ) {
-      localStorage.setItem("banco_token", SIMULATED_TOKEN);
-      localStorage.setItem("banco_user", JSON.stringify(SIMULATED_USER));
-      navigate("/dashboard", { replace: true });
-    } else {
-      setError("Credenciales incorrectas. Verifique su usuario y contraseña.");
+      if (data.success) {
+        localStorage.setItem("banco_token", data.token);
+        localStorage.setItem("banco_user", JSON.stringify(data.user));
+        navigate("/dashboard", { replace: true });
+      } else {
+        setError(data.message || "Credenciales incorrectas.");
+        setLoading(false);
+      }
+    } catch {
+      setError("Error de conexión con el servidor.");
       setLoading(false);
     }
   };
@@ -321,6 +319,8 @@ export default function Login() {
               )}
             </button>
           </form>
+
+          {/* Hint credenciales */}
         </div>
       </div>
 
@@ -581,28 +581,5 @@ const s = {
     borderRadius: "50%",
     display: "inline-block",
     animation: "spin 0.7s linear infinite",
-  },
-  hint: {
-    marginTop: 22,
-    paddingTop: 18,
-    borderTop: "1px solid var(--border)",
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    flexWrap: "wrap",
-  },
-  hintLabel: {
-    fontSize: 12,
-    color: "var(--text-muted)",
-  },
-  hintCode: {
-    fontSize: 12,
-    background: "var(--navy-900)",
-    border: "1px solid var(--border)",
-    borderRadius: 4,
-    padding: "3px 8px",
-    color: "var(--accent-gold)",
-    fontFamily: "monospace",
-    letterSpacing: "0.3px",
   },
 };

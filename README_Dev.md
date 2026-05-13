@@ -118,7 +118,7 @@ cd ..
 
 Se necesitan dos terminales abiertas de forma simultanea.
 
-Terminal 1 — backend (puerto 5000):
+Terminal 1 — backend (puerto 5001):
 
 ```bash
 npm run dev
@@ -140,7 +140,7 @@ La aplicacion queda disponible en `http://localhost:3000`.
 El archivo `.env` debe existir en la raiz del proyecto antes de ejecutar el servidor. Nunca se sube al repositorio.
 
 ```
-PORT=5000
+PORT=5001
 NODE_ENV=development
 CLIENT_URL=http://localhost:3000
 JWT_SECRET=clave_secreta_larga_y_aleatoria
@@ -159,26 +159,27 @@ Las variables de base de datos no se usan en el MVP actual. Estan preparadas par
 
 ## Credenciales de prueba (MVP)
 
-El MVP no se conecta a base de datos. La validacion del login se hace contra un usuario definido directamente en `src/services/auth.services.js`.
+El login ahora se conecta a la base de datos PostgreSQL. Las credenciales de prueba están definidas en la migración inicial.
 
 ```
 Usuario:    admin
 Contrasena: admin123
 ```
 
-Estas credenciales deben eliminarse cuando se implemente la autenticacion real contra PostgreSQL.
+Estas credenciales se pueden cambiar editando la migración o agregando nuevos usuarios directamente en la base de datos.
 
 ---
 
 ## Flujo de autenticacion actual
 
 1. El usuario ingresa credenciales en `client/src/pages/Login.jsx`.
-2. El frontend valida localmente contra las credenciales de prueba definidas en el mismo archivo.
-3. Si son correctas, guarda `banco_token` y `banco_user` en `localStorage`.
-4. `App.jsx` tiene un componente `PrivateRoute` que verifica la existencia de `banco_token` antes de renderizar cualquier ruta protegida. Si no existe, redirige a `/login`.
-5. El `Sidebar.jsx` tiene el boton de cerrar sesion que borra ambas entradas del `localStorage` y redirige a `/login`.
-
-El backend tiene las rutas `/api/auth/login`, `/api/auth/logout` y `/api/auth/me` implementadas y listas, pero el frontend del MVP no las consume todavia. La conexion frontend-backend se hara al implementar la autenticacion con base de datos.
+2. El frontend envía una petición POST a `/api/auth/login` con las credenciales.
+3. El backend valida contra la base de datos PostgreSQL usando bcrypt para el hash de contraseña.
+4. Si son correctas, el backend genera un JWT y lo devuelve junto con los datos del usuario.
+5. El frontend guarda `banco_token` (JWT) y `banco_user` en `localStorage`.
+6. `App.jsx` tiene un componente `PrivateRoute` que verifica la existencia de `banco_token` antes de renderizar cualquier ruta protegida. Si no existe, redirige a `/login`.
+7. El `Sidebar.jsx` tiene el boton de cerrar sesion que borra ambas entradas del `localStorage` y redirige a `/login`.
+8. Las rutas protegidas usan el middleware `auth.middleware.js` que valida el JWT en el header `Authorization: Bearer <token>`.
 
 ---
 
@@ -218,15 +219,15 @@ Todos los endpoints del backend responden en formato JSON con la estructura:
 ## Estado actual de los modulos
 
 | Modulo           | Backend                        | Frontend                   |
-| ---------------- | ------------------------------ | -------------------------- |
-| Login            | Ruta implementada              | Funcional con usuario test |
+| ---------------- | Funcional con BD PostgreSQL    | Funcional con API          |
 | Logout           | Ruta implementada              | Funcional (borra token)    |
-| Auth middleware  | Implementado                   | Guard en App.jsx           |
+| Auth middleware  | Implementado (valida JWT)      | Guard en App.jsx           |
 | Dashboard        | Sin implementar                | Placeholder                |
 | Cuentas          | Placeholder (retorna array []) | Placeholder                |
 | Transferencias   | Placeholder (retorna array []) | Placeholder                |
 | Estado de cuenta | Placeholder (retorna array []) | Placeholder                |
 | Perfil / Ajustes | Sin ruta                       | Placeholder                |
+| Base de datos    | Conectado a PostgreSQL         | Placeholder                |
 | Base de datos    | Pool configurado, sin conectar | No aplica                  |
 
 ---
