@@ -249,11 +249,69 @@ Las validaciones rechazan con estado 422 y detalles del error.
 
 ---
 
+## Testing
+
+The project includes comprehensive test suites for both backend and frontend.
+
+### Backend Tests
+
+Run backend tests using Jest:
+
+```bash
+npm test                  # Run all tests
+npm run test:watch       # Watch mode
+npm run test:coverage    # With coverage
+```
+
+**Test Coverage:**
+- 22 tests across 4 test suites
+- Controllers: auth, cuenta, transferencia
+- Middleware: error handling, validation
+
+### Frontend Tests
+
+Run frontend tests using React Testing Library:
+
+```bash
+cd client
+npm test                    # Interactive mode
+npm test -- --watchAll=false  # Run once
+npm test -- --coverage      # With coverage
+```
+
+**Test Coverage:**
+- 15 tests across 3 test suites
+- Components: AuthContext, ErrorBoundary, Login page
+- Integration with API mocking
+
+For detailed testing documentation, see [TESTING.md](./TESTING.md).
+
+---
+
+## Code Quality
+
+### Linting and Formatting
+
+Run linting:
+
+```bash
+npm run lint              # Check for issues
+npm run lint:fix          # Auto-fix issues
+npm run format            # Format with Prettier
+npm run format:check      # Check formatting
+```
+
+Configured with:
+- ESLint for code quality
+- Prettier for consistent formatting
+
+---
+
 ## Siguientes pasos
 
-- [ ] Tests backend (Jest + Supertest)
-- [ ] Tests frontend (React Testing Library)
-- [ ] Linting y formateo (Prettier)
+- [x] Tests backend (Jest + Supertest)
+- [x] Tests frontend (React Testing Library)
+- [x] Linting y formateo (ESLint + Prettier)
 - [ ] Documentación de API (Swagger)
 - [ ] Notificaciones de transferencias
 - [ ] Historial de transferencias por fecha
