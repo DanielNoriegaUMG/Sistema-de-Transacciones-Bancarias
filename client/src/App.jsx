@@ -11,7 +11,25 @@ import Profile from "./pages/Profile";
 import Sidebar from "./components/Sidebar";
 
 const PrivateRoute = ({ children }) => {
-  const { token } = useAuth();
+  const { token, loading, user } = useAuth();
+
+  if (loading && token && !user) {
+    return (
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: "100vh",
+          color: "var(--text-primary)",
+          background: "var(--navy-900)",
+        }}
+      >
+        Cargando sesión...
+      </div>
+    );
+  }
+
   return token ? children : <Navigate to="/login" replace />;
 };
 

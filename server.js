@@ -9,6 +9,7 @@ const authRoutes = require("./src/routes/auth.routes");
 const accountsRoutes = require("./src/routes/accounts.routes");
 const transfersRoutes = require("./src/routes/transfers.routes");
 const transactionsRoutes = require("./src/routes/transactions.routes");
+const errorHandler = require("./src/middlewares/error.middleware");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -47,6 +48,9 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.join(__dirname, "client/build", "index.html")),
   );
 }
+
+// ── Middleware de errores global ───────────────────────────────
+app.use(errorHandler);
 
 // ── Iniciar servidor ──────────────────────────────────────────
 app.listen(PORT, () => {
