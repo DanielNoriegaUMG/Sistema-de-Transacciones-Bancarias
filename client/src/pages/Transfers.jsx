@@ -13,6 +13,14 @@ const fmtMoney = (amount, currency = "USD") =>
 const maskAccount = (accountNumber) =>
   accountNumber ? `**** **** **** ${accountNumber.slice(-4)}` : "";
 
+const formatTransferSuccess = (transfer) => {
+  if (!transfer) return "Transferencia realizada correctamente.";
+  if (transfer.from_currency && transfer.to_currency && transfer.from_currency !== transfer.to_currency) {
+    return `Transferencia realizada: se debitó ${fmtMoney(transfer.amount, transfer.from_currency)} y se acreditó ${fmtMoney(transfer.amount_received, transfer.to_currency)}.`;
+  }
+  return "Transferencia realizada correctamente.";
+};
+
 const PlusIcon = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <line x1="12" y1="5" x2="12" y2="19" />
@@ -103,14 +111,19 @@ export default function Transfers() {
 
     setSubmitting(true);
     try {
-      await apiPost("/transfers", {
+      const result = await apiPost("/transfers", {
         fromAccountId: Number(form.fromAccountId),
         toAccountId: Number(form.toAccountId),
         amount,
         description: form.description.trim(),
       });
 
-      setSuccessMsg("Transferencia realizada correctamente.");
+      if (!result?.success) {
+        setFormError(result.message || "No se pudo realizar la transferencia.");
+        return;
+      }
+
+      setSuccessMsg(formatTransferSuccess(result.data));
       setForm({ ...form, amount: "", description: "" });
       fetchData();
     } catch (err) {
@@ -126,6 +139,11 @@ export default function Transfers() {
   };
 
   const originAccount = accounts.find((a) => String(a.id) === form.fromAccountId);
+  const destinationAccount = accounts.find((a) => String(a.id) === form.toAccountId);
+  const shouldConvert =
+    originAccount &&
+    destinationAccount &&
+    (originAccount.currency || "USD") !== (destinationAccount.currency || "USD");
 
   return (
     <div style={s.root}>
@@ -155,7 +173,7 @@ export default function Transfers() {
                 <option value="">Selecciona una cuenta</option>
                 {accounts.map((account) => (
                   <option key={account.id} value={account.id}>
-                    {maskAccount(account.account_number)} — {account.alias || account.account_number} ({CURRENCY_SYMBOLS[account.currency]}{account.balance})
+                    {maskAccount(account.account_number)} — {account.alias || account.account_number} ({fmtMoney(account.balance, account.currency)})
                   </option>
                 ))}
               </select>
@@ -167,7 +185,7 @@ export default function Transfers() {
                 <option value="">Selecciona una cuenta</option>
                 {accounts.map((account) => (
                   <option key={account.id} value={account.id}>
-                    {maskAccount(account.account_number)} — {account.alias || account.account_number} ({account.currency})
+                    {maskAccount(account.account_number)} — {account.alias || account.account_number} ({fmtMoney(account.balance, account.currency)})
                   </option>
                 ))}
               </select>
@@ -205,6 +223,12 @@ export default function Transfers() {
               </div>
             )}
 
+            {shouldConvert && (
+              <div style={s.conversionInfo}>
+                <strong>Conversión automática:</strong> se debitará en {originAccount.currency} y se acreditará en {destinationAccount.currency} con la tasa vigente del banco.
+              </div>
+            )}
+
             {formError && <div style={s.formError}>{formError}</div>}
 
             <button type="submit" style={s.submitBtn} disabled={submitting || loading}>
@@ -237,9 +261,21 @@ export default function Transfers() {
                     <strong>{maskAccount(item.to_account_number)}</strong>
                   </div>
                   <div style={s.transferRow}>
-                    <span style={s.transferLabel}>Monto</span>
-                    <strong>{fmtMoney(item.amount, originAccount?.currency)}</strong>
+                    <span style={s.transferLabel}>Débito</span>
+                    <strong>{fmtMoney(item.amount, item.from_currency)}</strong>
                   </div>
+                  {item.from_currency !== item.to_currency && (
+                    <>
+                      <div style={s.transferRow}>
+                        <span style={s.transferLabel}>Crédito</span>
+                        <strong>{fmtMoney(item.amount_received, item.to_currency)}</strong>
+                      </div>
+                      <div style={s.transferRow}>
+                        <span style={s.transferLabel}>Tasa</span>
+                        <strong>1 {item.from_currency} = {Number(item.exchange_rate).toFixed(6)} {item.to_currency}</strong>
+                      </div>
+                    </>
+                  )}
                   <div style={s.transferRow}>
                     <span style={s.transferLabel}>Estado</span>
                     <span style={item.status === "completed" ? s.statusSuccess : s.statusPending}>{item.status}</span>
@@ -370,6 +406,13 @@ const s = {
     borderRadius: 14,
     background: "rgba(255,255,255,0.04)",
     color: "var(--text-secondary)",
+  },
+  conversionInfo: {
+    padding: "12px 16px",
+    borderRadius: 14,
+    background: "rgba(59, 130, 246, 0.12)",
+    color: "#8fb7ff",
+    lineHeight: 1.5,
   },
   formError: {
     padding: 12,

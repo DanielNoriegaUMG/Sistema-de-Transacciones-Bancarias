@@ -5,6 +5,7 @@ const findAllByUserId = async (userId) => {
     `SELECT ec.id,
             ec.cuenta_id,
             c.account_number,
+            c.currency,
             ec.amount,
             ec.type,
             ec.description,
@@ -40,4 +41,3 @@ module.exports = {
   findAllByUserId,
   insertTransaction,
 };
-

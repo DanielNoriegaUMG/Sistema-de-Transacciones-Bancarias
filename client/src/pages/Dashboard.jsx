@@ -15,6 +15,22 @@ const fmt = (value, currency = "USD") =>
     maximumFractionDigits: 2,
   })}`;
 
+const summarizeBalancesByCurrency = (accounts) =>
+  accounts.reduce((summary, account) => {
+    const currency = account.currency || "USD";
+    summary[currency] = (summary[currency] || 0) + Number(account.balance || 0);
+    return summary;
+  }, {});
+
+const formatTransferAmount = (transfer) => {
+  if (!transfer) return "";
+  const debit = fmt(transfer.amount, transfer.from_currency || "USD");
+  if (transfer.from_currency && transfer.to_currency && transfer.from_currency !== transfer.to_currency) {
+    return `${debit} → ${fmt(transfer.amount_received, transfer.to_currency)}`;
+  }
+  return debit;
+};
+
 const formatDate = (value) =>
   new Date(value).toLocaleDateString("es-GT", {
     day: "2-digit",
@@ -63,13 +79,13 @@ export default function Dashboard() {
   }, [logout, navigate]);
 
   const summary = useMemo(() => {
-    const totalBalance = accounts.reduce((sum, account) => sum + Number(account.balance || 0), 0);
+    const balancesByCurrency = summarizeBalancesByCurrency(accounts);
     const totalAccounts = accounts.length;
     const totalTransactions = transactions.length;
     const totalTransfers = transfers.length;
     const recentMovement = transactions[0] || null;
     const recentTransfer = transfers[0] || null;
-    return { totalBalance, totalAccounts, totalTransactions, totalTransfers, recentMovement, recentTransfer };
+    return { balancesByCurrency, totalAccounts, totalTransactions, totalTransfers, recentMovement, recentTransfer };
   }, [accounts, transactions, transfers]);
 
   return (
@@ -88,10 +104,12 @@ export default function Dashboard() {
           <span style={s.cardLabel}>Cuentas activas</span>
           <strong style={s.cardValue}>{summary.totalAccounts}</strong>
         </article>
-        <article style={s.card}>
-          <span style={s.cardLabel}>Saldo total</span>
-          <strong style={s.cardValue}>{fmt(summary.totalBalance, accounts[0]?.currency || "GTQ")}</strong>
-        </article>
+        {Object.entries(summary.balancesByCurrency).map(([currency, amount]) => (
+          <article key={currency} style={s.card}>
+            <span style={s.cardLabel}>Saldo total ({currency})</span>
+            <strong style={s.cardValue}>{fmt(amount, currency)}</strong>
+          </article>
+        ))}
         <article style={s.card}>
           <span style={s.cardLabel}>Movimientos recientes</span>
           <strong style={s.cardValue}>{summary.totalTransactions}</strong>
@@ -125,7 +143,7 @@ export default function Dashboard() {
                     <p style={s.itemMeta}>{tx.account_number} • {formatDate(tx.created_at)}</p>
                   </div>
                   <div style={s.itemRight}>
-                    <span style={s.amount}>{fmt(tx.amount, "GTQ")}</span>
+                    <span style={s.amount}>{fmt(tx.amount, tx.currency || "USD")}</span>
                     <span style={s.typeBadge}>{tx.type}</span>
                   </div>
                 </article>
@@ -156,7 +174,7 @@ export default function Dashboard() {
                     <p style={s.itemMeta}>{formatDate(transfer.created_at)}</p>
                   </div>
                   <div style={s.itemRight}>
-                    <span style={s.amount}>{fmt(transfer.amount, "GTQ")}</span>
+                    <span style={s.amount}>{formatTransferAmount(transfer)}</span>
                     <span style={s.typeBadge}>{transfer.status}</span>
                   </div>
                 </article>

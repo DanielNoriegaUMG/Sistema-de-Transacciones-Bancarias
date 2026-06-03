@@ -15,6 +15,17 @@ const formatCurrency = (value, currency = "USD") =>
     maximumFractionDigits: 2,
   })}`;
 
+const addCurrencyTotal = (totals, currency, amount) => ({
+  ...totals,
+  [currency]: (totals[currency] || 0) + amount,
+});
+
+const formatCurrencyTotals = (totals) => {
+  const entries = Object.entries(totals);
+  if (entries.length === 0) return formatCurrency(0, "GTQ");
+  return entries.map(([currency, amount]) => formatCurrency(amount, currency)).join(" · ");
+};
+
 const formatDate = (value) =>
   new Date(value).toLocaleString("es-GT", {
     dateStyle: "medium",
@@ -61,20 +72,31 @@ export default function Transactions() {
 
   const filteredTransactions = useMemo(() => {
     if (filter === "all") return transactions;
-    return transactions.filter((item) => item.type === filter);
+    return transactions.filter((item) => String(item.type || "").toLowerCase() === filter);
   }, [filter, transactions]);
 
   const totals = useMemo(() => {
+    const seenAccounts = new Set();
+
     return transactions.reduce(
       (acc, tx) => {
-        const amount = Number(tx.amount || 0);
-        if (tx.type === "credit") acc.inflow += amount;
-        if (tx.type === "debit") acc.outflow += amount;
-        if (tx.type === "transfer") acc.transfer += amount;
-        acc.balance = Number(tx.balance_after || acc.balance);
+        const amount = Math.abs(Number(tx.amount || 0));
+        const currency = tx.currency || "USD";
+        const type = String(tx.type || "").toLowerCase();
+
+        if (type === "credit") acc.inflow = addCurrencyTotal(acc.inflow, currency, amount);
+        if (type === "debit") acc.outflow = addCurrencyTotal(acc.outflow, currency, amount);
+        if (type === "transfer") acc.transfer = addCurrencyTotal(acc.transfer, currency, amount);
+
+        const accountKey = tx.cuenta_id || tx.account_number;
+        if (!seenAccounts.has(accountKey)) {
+          acc.balance = addCurrencyTotal(acc.balance, currency, Number(tx.balance_after || 0));
+          seenAccounts.add(accountKey);
+        }
+
         return acc;
       },
-      { inflow: 0, outflow: 0, transfer: 0, balance: 0 },
+      { inflow: {}, outflow: {}, transfer: {}, balance: {} },
     );
   }, [transactions]);
 
@@ -96,19 +118,19 @@ export default function Transactions() {
       <section style={s.statsGrid}>
         <article style={s.statCard}>
           <span style={s.statLabel}>Ingresos</span>
-          <strong style={s.statValue}>{formatCurrency(totals.inflow, "GTQ")}</strong>
+          <strong style={s.statValue}>{formatCurrencyTotals(totals.inflow)}</strong>
         </article>
         <article style={s.statCard}>
           <span style={s.statLabel}>Egresos</span>
-          <strong style={s.statValue}>{formatCurrency(totals.outflow, "GTQ")}</strong>
+          <strong style={s.statValue}>{formatCurrencyTotals(totals.outflow)}</strong>
         </article>
         <article style={s.statCard}>
           <span style={s.statLabel}>Transferencias</span>
-          <strong style={s.statValue}>{formatCurrency(totals.transfer, "GTQ")}</strong>
+          <strong style={s.statValue}>{formatCurrencyTotals(totals.transfer)}</strong>
         </article>
         <article style={s.statCard}>
-          <span style={s.statLabel}>Saldo último</span>
-          <strong style={s.statValue}>{formatCurrency(totals.balance, "GTQ")}</strong>
+          <span style={s.statLabel}>Saldo por moneda</span>
+          <strong style={s.statValue}>{formatCurrencyTotals(totals.balance)}</strong>
         </article>
       </section>
 
@@ -135,20 +157,25 @@ export default function Transactions() {
               </tr>
             </thead>
             <tbody>
-              {filteredTransactions.map((movement) => (
-                <tr key={movement.id} style={s.tr}>
-                  <td style={s.td}>{formatDate(movement.created_at)}</td>
-                  <td style={s.td}>{movement.account_number}</td>
-                  <td style={s.td}>{movement.description || "-"}</td>
-                  <td style={s.td}>
-                    <span style={{ ...s.badge, ...badgeStyle(movement.type) }}>
-                      {TYPE_LABELS[movement.type] || movement.type}
-                    </span>
-                  </td>
-                  <td style={s.td}>{formatCurrency(movement.amount, "GTQ")}</td>
-                  <td style={s.td}>{formatCurrency(movement.balance_after, "GTQ")}</td>
-                </tr>
-              ))}
+              {filteredTransactions.map((movement) => {
+                const type = String(movement.type || "").toLowerCase();
+                const currency = movement.currency || "USD";
+
+                return (
+                  <tr key={movement.id} style={s.tr}>
+                    <td style={s.td}>{formatDate(movement.created_at)}</td>
+                    <td style={s.td}>{movement.account_number}</td>
+                    <td style={s.td}>{movement.description || "-"}</td>
+                    <td style={s.td}>
+                      <span style={{ ...s.badge, ...badgeStyle(type) }}>
+                        {TYPE_LABELS[type] || movement.type}
+                      </span>
+                    </td>
+                    <td style={s.td}>{formatCurrency(movement.amount, currency)}</td>
+                    <td style={s.td}>{formatCurrency(movement.balance_after, currency)}</td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         )}

@@ -2,6 +2,9 @@ const pool = require("../config/db");
 const cuentaModel = require("../models/cuenta.model");
 const transferenciaModel = require("../models/transferencia.model");
 const estadoCuentaModel = require("../models/estadoCuenta.model");
+const exchangeServices = require("./exchange.services");
+
+const roundCurrency = (value) => Math.round(Number(value) * 100) / 100;
 
 const getAll = async (user) => {
   const transfers = await transferenciaModel.findAllByUserId(user.id);
@@ -66,8 +69,32 @@ const create = async (body, user) => {
       };
     }
 
-    const newFromBalance = Number(fromAccount.balance) - parsedAmount;
-    const newToBalance = Number(toAccount.balance) + parsedAmount;
+    // Convert amount if currencies are different
+    let amountReceived = parsedAmount;
+    let exchangeRate = 1;
+
+    if (fromAccount.currency !== toAccount.currency) {
+      try {
+        const conversionInfo = await exchangeServices.getConversionInfo(
+          parsedAmount,
+          fromAccount.currency,
+          toAccount.currency,
+          client,
+        );
+        amountReceived = conversionInfo.convertedAmount;
+        exchangeRate = conversionInfo.rate;
+      } catch (error) {
+        await client.query("ROLLBACK");
+        return {
+          success: false,
+          message: error.message,
+          data: null,
+        };
+      }
+    }
+
+    const newFromBalance = roundCurrency(Number(fromAccount.balance) - parsedAmount);
+    const newToBalance = roundCurrency(Number(toAccount.balance) + amountReceived);
 
     await cuentaModel.updateBalance(fromAccountId, newFromBalance, client);
     await cuentaModel.updateBalance(toAccountId, newToBalance, client);
@@ -76,25 +103,39 @@ const create = async (body, user) => {
       fromAccountId,
       toAccountId,
       parsedAmount,
+      amountReceived,
+      exchangeRate,
+      fromAccount.currency,
+      toAccount.currency,
       description,
       client,
     );
+
+    const debitDescription =
+      fromAccount.currency !== toAccount.currency
+        ? `Transferencia a cuenta ${toAccount.account_number} (${fromAccount.currency} ${parsedAmount} = ${toAccount.currency} ${amountReceived} @ ${exchangeRate}): ${description}`
+        : `Transferencia a cuenta ${toAccount.account_number}: ${description}`;
+
+    const creditDescription =
+      fromAccount.currency !== toAccount.currency
+        ? `Transferencia desde cuenta ${fromAccount.account_number} (${fromAccount.currency} ${parsedAmount} = ${toAccount.currency} ${amountReceived} @ ${exchangeRate}): ${description}`
+        : `Transferencia desde cuenta ${fromAccount.account_number}: ${description}`;
 
     await estadoCuentaModel.insertTransaction(
       fromAccountId,
       -parsedAmount,
       "DEBIT",
       newFromBalance,
-      `Transferencia a cuenta ${toAccount.account_number}: ${description}`,
+      debitDescription,
       client,
     );
 
     await estadoCuentaModel.insertTransaction(
       toAccountId,
-      parsedAmount,
+      amountReceived,
       "CREDIT",
       newToBalance,
-      `Transferencia desde cuenta ${fromAccount.account_number}: ${description}`,
+      creditDescription,
       client,
     );
 
