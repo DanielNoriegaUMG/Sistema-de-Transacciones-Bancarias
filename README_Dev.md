@@ -1,10 +1,6 @@
-<<<<<<< HEAD
-# Sistema-de-Transacciones-Bancarias
-Curso de ingenieria de software para Implementación y Mantenimiento de Software con SonarQube
-=======
 # BancoApp
 
-Plataforma de banca digital. El proyecto es un monorepo con backend en Node.js/Express y frontend en React. El MVP actual tiene login y logout funcionales. El resto de módulos (Dashboard, Cuentas, Transferencias, Estado de cuenta, Perfil) existen como vistas placeholder listas para ser implementadas.
+Plataforma de banca digital. El proyecto es un monorepo con backend en Node.js/Express y frontend en React. El login ya está integrado con la API y PostgreSQL, y el resto de módulos siguen en desarrollo como placeholders.
 
 ---
 
@@ -12,7 +8,7 @@ Plataforma de banca digital. El proyecto es un monorepo con backend en Node.js/E
 
 - Node.js v22.19.0 o superior
 - npm v10 o superior
-- PostgreSQL 14 o superior (requerido a partir de la fase de base de datos)
+- PostgreSQL 14 o superior
 
 ---
 
@@ -37,29 +33,29 @@ BANCO-APP/
 │   │   └── transferencia.controller.js
 │   │
 │   ├── middlewares/
-│   │   └── auth.middleware.js         Valida el token Bearer en rutas protegidas
+│   │   └── auth.middleware.js         Valida el JWT en rutas protegidas
 │   │
 │   ├── models/
-│   │   ├── auth.model.js              Consultas SQL de autenticación (comentadas, listas para activar)
+│   │   ├── auth.model.js              Consultas SQL de autenticación
 │   │   ├── cuenta.model.js
 │   │   ├── estadoCuenta.model.js
 │   │   └── transferencia.model.js
 │   │
 │   ├── routes/
-│   │   ├── auth.routes.js             POST /api/auth/login, /logout  GET /api/auth/me
+│   │   ├── auth.routes.js             POST /api/auth/login, /logout y GET /api/auth/me
 │   │   ├── accounts.routes.js         GET /api/accounts, /api/accounts/:id
 │   │   ├── transfers.routes.js        GET y POST /api/transfers
 │   │   └── transactions.routes.js     GET /api/transactions
 │   │
 │   ├── services/
-│   │   ├── auth.services.js           Logica de negocio de autenticacion (usuario de prueba activo)
+│   │   ├── auth.services.js           Lógica de negocio de autenticación con PostgreSQL y JWT
 │   │   ├── cuenta.services.js
 │   │   ├── estadoCuenta.services.js
 │   │   └── transferencia.services.js
 │   │
-│   └── utils/                         Utilitarios compartidos (pendiente de implementacion)
+│   └── utils/                         Utilitarios compartidos (pendiente de implementación)
 │
-└── client/                            Aplicacion React (frontend)
+└── client/                            Aplicación React (frontend)
     ├── package.json
     │
     ├── public/
@@ -69,16 +65,16 @@ BANCO-APP/
     │   └── robots.txt
     │
     └── src/
-        ├── App.jsx                    Router principal con guards de autenticacion
+        ├── App.jsx                    Router principal con guards de autenticación
         ├── index.jsx                  Punto de entrada de React
         ├── index.css                  Variables CSS globales y reset
         │
         ├── components/
-        │   ├── Sidebar.jsx            Navegacion lateral y boton de cerrar sesion
+        │   ├── Sidebar.jsx            Navegación lateral y botón de cerrar sesión
         │   └── DevPlaceholder.jsx     Componente reutilizable para vistas en desarrollo
         │
         └── pages/
-            ├── Login.jsx              Funcional — valida contra usuario de prueba
+            ├── Login.jsx              Funcional — valida con backend real
             ├── Dashboard.jsx          Placeholder
             ├── Accounts.jsx           Placeholder
             ├── Transfers.jsx          Placeholder
@@ -314,7 +310,7 @@ const response = await fetch("/api/accounts", {
 const data = await response.json();
 ```
 
-La URL base no necesita incluir el host en desarrollo porque `client/package.json` tiene configurado `"proxy": "http://localhost:5000"`, lo que redirige automaticamente todas las peticiones a `/api/*` al backend.
+La URL base no necesita incluir el host en desarrollo porque `client/package.json` tiene configurado "proxy": "http://localhost:5001", lo que redirige automaticamente todas las peticiones a `/api/*` al backend.
 
 ---
 
@@ -462,9 +458,8 @@ Desde `client/` (frontend):
 
 **No modificar `client/public/`** sin revisar que los archivos `favicon.ico`, `manifest.json` y `robots.txt` permanezcan presentes. Si alguno de estos archivos no existe, CRA intenta proxiarlos al backend y genera errores `ECONNREFUSED` en consola cuando el backend no esta corriendo.
 
-**El proxy de desarrollo** esta configurado en `client/package.json` con `"proxy": "http://localhost:5000"`. Esto significa que en desarrollo todas las peticiones a rutas que empiezan con `/api` se redirigen automaticamente al backend. En produccion esto no aplica; el servidor Express sirve el build de React directamente.
+**El proxy de desarrollo** esta configurado en `client/package.json` con "proxy": "http://localhost:5001". Esto significa que en desarrollo todas las peticiones a rutas que empiezan con `/api` se redirigen automaticamente al backend. En produccion esto no aplica; el servidor Express sirve el build de React directamente.
 
 **Los modelos tienen las consultas SQL comentadas** y listas para activarse. No reescribir los modelos desde cero, solo descomentar y ajustar al esquema de la base de datos que se defina.
 
 **Las variables de CSS** del frontend estan centralizadas en `client/src/index.css`. Usar siempre las variables definidas (`--navy-900`, `--accent-gold`, `--surface`, etc.) en lugar de valores hexadecimales directos para mantener consistencia visual.
->>>>>>> 2410f5aa (chore: proyecto base con estructura inicial, dependencias y login simulado)
