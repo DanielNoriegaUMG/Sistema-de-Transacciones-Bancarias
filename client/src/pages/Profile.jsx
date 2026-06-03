@@ -1,30 +1,30 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Profile() {
   const navigate = useNavigate();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, logout, refreshProfile } = useAuth();
+  const [profile, setProfile] = useState(user);
+  const [loading, setLoading] = useState(!user);
   const [error, setError] = useState("");
 
-  const token = localStorage.getItem("banco_token");
-
   useEffect(() => {
+    if (user) {
+      setProfile(user);
+      setLoading(false);
+      return;
+    }
+
     const loadProfile = async () => {
       setLoading(true);
       setError("");
 
       try {
-        const response = await fetch("/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-          throw new Error(data.message || "No se pudo obtener la información del perfil.");
+        const data = await refreshProfile();
+        if (data?.user) {
+          setProfile(data.user);
         }
-
-        setUser(data.user);
       } catch (err) {
         console.error("[Profile] loadProfile:", err);
         setError(err.message || "Error al cargar perfil.");
@@ -34,11 +34,10 @@ export default function Profile() {
     };
 
     loadProfile();
-  }, [token]);
+  }, [refreshProfile, user]);
 
   const handleLogout = () => {
-    localStorage.removeItem("banco_token");
-    localStorage.removeItem("banco_user");
+    logout();
     navigate("/login", { replace: true });
   };
 
@@ -58,29 +57,29 @@ export default function Profile() {
 
       {loading ? (
         <div style={s.loading}>Cargando perfil...</div>
-      ) : user ? (
+      ) : profile ? (
         <div style={s.content}>
           <section style={s.profileCard}>
             <div style={s.profileHeader}>
-              <div style={s.avatar}>{user.name ? user.name.charAt(0).toUpperCase() : "U"}</div>
+              <div style={s.avatar}>{profile?.name ? profile.name.charAt(0).toUpperCase() : "U"}</div>
               <div>
-                <h2 style={s.profileName}>{user.name || "Usuario"}</h2>
-                <p style={s.profileEmail}>{user.email || "Sin correo registrado"}</p>
+                <h2 style={s.profileName}>{profile?.name || "Usuario"}</h2>
+                <p style={s.profileEmail}>{profile?.email || "Sin correo registrado"}</p>
               </div>
             </div>
 
             <div style={s.fieldsGrid}>
               <div style={s.fieldBox}>
                 <span style={s.fieldLabel}>Usuario</span>
-                <strong style={s.fieldValue}>{user.username || "-"}</strong>
+                <strong style={s.fieldValue}>{profile?.username || "-"}</strong>
               </div>
               <div style={s.fieldBox}>
                 <span style={s.fieldLabel}>Rol</span>
-                <strong style={s.fieldValue}>{user.role || "Cliente"}</strong>
+                <strong style={s.fieldValue}>{profile?.role || "Cliente"}</strong>
               </div>
               <div style={s.fieldBox}>
                 <span style={s.fieldLabel}>Registrado el</span>
-                <strong style={s.fieldValue}>{user.created_at ? new Date(user.created_at).toLocaleDateString("es-GT") : "-"}</strong>
+                <strong style={s.fieldValue}>{profile?.created_at ? new Date(profile.created_at).toLocaleDateString("es-GT") : "-"}</strong>
               </div>
             </div>
           </section>

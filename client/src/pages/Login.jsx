@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { token, login } = useAuth();
   const [form, setForm] = useState({ username: "", password: "" });
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
@@ -10,13 +12,13 @@ export default function Login() {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem("banco_token")) {
+    if (token) {
       navigate("/dashboard", { replace: true });
       return;
     }
     const t = setTimeout(() => setMounted(true), 60);
     return () => clearTimeout(t);
-  }, [navigate]);
+  }, [navigate, token]);
 
   const handleChange = (e) => {
     setForm((p) => ({ ...p, [e.target.name]: e.target.value }));
@@ -33,27 +35,12 @@ export default function Login() {
     setError("");
 
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
-      });
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        setError(data.message || "Credenciales incorrectas. Verifique su usuario y contraseña.");
-        setLoading(false);
-        return;
-      }
-
-      localStorage.setItem("banco_token", data.token);
-      localStorage.setItem("banco_user", JSON.stringify(data.user));
+      await login(form);
       navigate("/dashboard", { replace: true });
-    } catch (error) {
-      console.error("[Login] submit error:", error);
-      setError("No se pudo conectar con el servidor. Intenta de nuevo.");
+    } catch (err) {
+      console.error("[Login] submit error:", err);
+      setError(err.message || "No se pudo conectar con el servidor. Intenta de nuevo.");
+    } finally {
       setLoading(false);
     }
   };

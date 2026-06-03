@@ -1,6 +1,7 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
+import { AuthProvider, useAuth } from "./context/AuthContext";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Accounts from "./pages/Accounts";
@@ -9,9 +10,8 @@ import Transactions from "./pages/Transactions";
 import Profile from "./pages/Profile";
 import Sidebar from "./components/Sidebar";
 
-// ── Guard: verifica token en localStorage ────────────────────
 const PrivateRoute = ({ children }) => {
-  const token = localStorage.getItem("banco_token");
+  const { token } = useAuth();
   return token ? children : <Navigate to="/login" replace />;
 };
 
@@ -28,66 +28,68 @@ const AppLayout = ({ children }) => (
 function App() {
   return (
     <BrowserRouter>
-      <Routes>
-        {/* Ruta pública */}
-        <Route path="/login" element={<Login />} />
+      <AuthProvider>
+        <Routes>
+          {/* Ruta pública */}
+          <Route path="/login" element={<Login />} />
 
-        {/* Rutas privadas */}
-        <Route
-          path="/dashboard"
-          element={
-            <PrivateRoute>
-              <AppLayout>
-                <Dashboard />
-              </AppLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/accounts"
-          element={
-            <PrivateRoute>
-              <AppLayout>
-                <Accounts />
-              </AppLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/transfers"
-          element={
-            <PrivateRoute>
-              <AppLayout>
-                <Transfers />
-              </AppLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/transactions"
-          element={
-            <PrivateRoute>
-              <AppLayout>
-                <Transactions />
-              </AppLayout>
-            </PrivateRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <PrivateRoute>
-              <AppLayout>
-                <Profile />
-              </AppLayout>
-            </PrivateRoute>
-          }
-        />
+          {/* Rutas privadas */}
+          <Route
+            path="/dashboard"
+            element={
+              <PrivateRoute>
+                <AppLayout>
+                  <Dashboard />
+                </AppLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/accounts"
+            element={
+              <PrivateRoute>
+                <AppLayout>
+                  <Accounts />
+                </AppLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/transfers"
+            element={
+              <PrivateRoute>
+                <AppLayout>
+                  <Transfers />
+                </AppLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/transactions"
+            element={
+              <PrivateRoute>
+                <AppLayout>
+                  <Transactions />
+                </AppLayout>
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <PrivateRoute>
+                <AppLayout>
+                  <Profile />
+                </AppLayout>
+              </PrivateRoute>
+            }
+          />
 
-        {/* Redirecciones */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
+          {/* Redirecciones */}
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   );
 }
