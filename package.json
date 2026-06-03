@@ -8,7 +8,11 @@
     "start": "node server.js",
     "dev": "npx nodemon server.js",
     "migrate:up": "node-pg-migrate up -m ./migrations",
-    "migrate:down": "node-pg-migrate down -m ./migrations"
+    "migrate:down": "node-pg-migrate down -m ./migrations",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "format": "prettier --write '**/*.js'",
+    "format:check": "prettier --check '**/*.js'"
   },
   "keywords": [],
   "author": "",
@@ -27,6 +31,7 @@
   "devDependencies": {
     "eslint": "^10.3.0",
     "node-pg-migrate": "^8.0.4",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "prettier": "^3.0.0"
   }
 }
