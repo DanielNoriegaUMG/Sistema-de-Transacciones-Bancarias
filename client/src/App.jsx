@@ -2,6 +2,7 @@ import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import ErrorBoundary from "./components/ErrorBoundary";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Accounts from "./pages/Accounts";
@@ -45,70 +46,72 @@ const AppLayout = ({ children }) => (
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <Routes>
-          {/* Ruta pública */}
-          <Route path="/login" element={<Login />} />
+    <ErrorBoundary>
+      <BrowserRouter>
+        <AuthProvider>
+          <Routes>
+            {/* Ruta pública */}
+            <Route path="/login" element={<Login />} />
 
-          {/* Rutas privadas */}
-          <Route
-            path="/dashboard"
-            element={
-              <PrivateRoute>
-                <AppLayout>
-                  <Dashboard />
-                </AppLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/accounts"
-            element={
-              <PrivateRoute>
-                <AppLayout>
-                  <Accounts />
-                </AppLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/transfers"
-            element={
-              <PrivateRoute>
-                <AppLayout>
-                  <Transfers />
-                </AppLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/transactions"
-            element={
-              <PrivateRoute>
-                <AppLayout>
-                  <Transactions />
-                </AppLayout>
-              </PrivateRoute>
-            }
-          />
-          <Route
-            path="/profile"
-            element={
-              <PrivateRoute>
-                <AppLayout>
-                  <Profile />
-                </AppLayout>
-              </PrivateRoute>
-            }
-          />
+            {/* Rutas privadas */}
+            <Route
+              path="/dashboard"
+              element={
+                <PrivateRoute>
+                  <AppLayout>
+                    <Dashboard />
+                  </AppLayout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/accounts"
+              element={
+                <PrivateRoute>
+                  <AppLayout>
+                    <Accounts />
+                  </AppLayout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/transfers"
+              element={
+                <PrivateRoute>
+                  <AppLayout>
+                    <Transfers />
+                  </AppLayout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/transactions"
+              element={
+                <PrivateRoute>
+                  <AppLayout>
+                    <Transactions />
+                  </AppLayout>
+                </PrivateRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <PrivateRoute>
+                  <AppLayout>
+                    <Profile />
+                  </AppLayout>
+                </PrivateRoute>
+              }
+            />
 
-          {/* Redirecciones */}
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        </Routes>
-      </AuthProvider>
-    </BrowserRouter>
+            {/* Redirecciones */}
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
+        </AuthProvider>
+      </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 
