@@ -1,4 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { apiGet, apiPost } from "../api";
+import { useAuth } from "../context/AuthContext";
 
 const CURRENCY_SYMBOLS = { USD: "$", GTQ: "Q", EUR: "€" };
 const fmtMoney = (amount, currency = "USD") =>
@@ -32,20 +35,18 @@ export default function Transfers() {
   });
   const [submitting, setSubmitting] = useState(false);
 
-  const token = localStorage.getItem("banco_token");
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError("");
 
     try {
-      const [accountsRes, transfersRes] = await Promise.all([
-        fetch("/api/accounts", { headers: { Authorization: `Bearer ${token}` } }),
-        fetch("/api/transfers", { headers: { Authorization: `Bearer ${token}` } }),
+      const [accountsData, transfersData] = await Promise.all([
+        apiGet("/accounts"),
+        apiGet("/transfers"),
       ]);
-
-      const accountsData = await accountsRes.json();
-      const transfersData = await transfersRes.json();
 
       if (!accountsData.success) {
         throw new Error(accountsData.message || "Error cargando cuentas.");
@@ -60,6 +61,11 @@ export default function Transfers() {
         setForm((prev) => ({ ...prev, fromAccountId: String(accountsData.data[0].id), toAccountId: String(accountsData.data.length > 1 ? accountsData.data[1].id : accountsData.data[0].id) }));
       }
     } catch (err) {
+      if (err?.unauthorized) {
+        logout();
+        navigate("/login", { replace: true });
+        return;
+      }
       setError(err.message || "Error de conexión con el servidor.");
     } finally {
       setLoading(false);
@@ -97,29 +103,23 @@ export default function Transfers() {
 
     setSubmitting(true);
     try {
-      const res = await fetch("/api/transfers", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          fromAccountId: Number(form.fromAccountId),
-          toAccountId: Number(form.toAccountId),
-          amount,
-          description: form.description.trim(),
-        }),
+      const data = await apiPost("/transfers", {
+        fromAccountId: Number(form.fromAccountId),
+        toAccountId: Number(form.toAccountId),
+        amount,
+        description: form.description.trim(),
       });
-      const data = await res.json();
-      if (!data.success) {
-        setFormError(data.message || "No se pudo crear la transferencia.");
-        return;
-      }
+
       setSuccessMsg("Transferencia realizada correctamente.");
       setForm({ ...form, amount: "", description: "" });
       fetchData();
-    } catch {
-      setFormError("Error de conexión con el servidor.");
+    } catch (err) {
+      if (err?.unauthorized) {
+        logout();
+        navigate("/login", { replace: true });
+        return;
+      }
+      setFormError(err.message || "Error de conexión con el servidor.");
     } finally {
       setSubmitting(false);
     }

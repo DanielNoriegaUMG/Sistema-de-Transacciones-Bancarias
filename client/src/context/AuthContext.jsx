@@ -1,5 +1,5 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { apiFetch } from "../api";
+import { apiFetch, apiPost } from "../api";
 
 const AuthContext = createContext({
   user: null,
@@ -54,16 +54,7 @@ export const AuthProvider = ({ children }) => {
   const login = useCallback(async (credentials) => {
     setLoading(true);
     try {
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(credentials),
-      });
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || "No se pudo iniciar sesión.");
-      }
+      const data = await apiPost("/auth/login", credentials);
 
       localStorage.setItem("banco_token", data.token);
       localStorage.setItem("banco_user", JSON.stringify(data.user));

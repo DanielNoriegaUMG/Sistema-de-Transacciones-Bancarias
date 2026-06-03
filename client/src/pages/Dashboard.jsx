@@ -1,4 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { apiGet } from "../api";
+import { useAuth } from "../context/AuthContext";
 
 const currencySymbol = (currency) => {
   if (currency === "GTQ") return "Q";
@@ -26,7 +29,8 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const token = localStorage.getItem("banco_token");
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadData = async () => {
@@ -34,32 +38,21 @@ export default function Dashboard() {
       setError("");
 
       try {
-        const [accountsRes, transactionsRes, transfersRes] = await Promise.all([
-          fetch("/api/accounts", { headers: { Authorization: `Bearer ${token}` } }),
-          fetch("/api/transactions", { headers: { Authorization: `Bearer ${token}` } }),
-          fetch("/api/transfers", { headers: { Authorization: `Bearer ${token}` } }),
-        ]);
-
         const [accountsData, transactionsData, transfersData] = await Promise.all([
-          accountsRes.json(),
-          transactionsRes.json(),
-          transfersRes.json(),
+          apiGet("/accounts"),
+          apiGet("/transactions"),
+          apiGet("/transfers"),
         ]);
-
-        if (!accountsRes.ok || !accountsData.success) {
-          throw new Error(accountsData.message || "Error al cargar cuentas.");
-        }
-        if (!transactionsRes.ok || !transactionsData.success) {
-          throw new Error(transactionsData.message || "Error al cargar movimientos.");
-        }
-        if (!transfersRes.ok || !transfersData.success) {
-          throw new Error(transfersData.message || "Error al cargar transferencias.");
-        }
 
         setAccounts(accountsData.data || []);
         setTransactions(transactionsData.data || []);
         setTransfers(transfersData.data || []);
       } catch (err) {
+        if (err?.unauthorized) {
+          logout();
+          navigate("/login", { replace: true });
+          return;
+        }
         setError(err.message || "No se pudieron cargar los datos del dashboard.");
       } finally {
         setLoading(false);

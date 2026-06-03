@@ -1,4 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { apiGet } from "../api";
+import { useAuth } from "../context/AuthContext";
 
 const CURRENCY_SYMBOLS = { USD: "$", GTQ: "Q", EUR: "€" };
 const fmtMoney = (amount, currency = "USD") =>
@@ -15,29 +18,27 @@ export default function Accounts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const token = localStorage.getItem("banco_token");
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   const fetchAccounts = useCallback(async () => {
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch("/api/accounts", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
-        throw new Error(data.message || "No se pudieron obtener las cuentas.");
-      }
-
+      const data = await apiGet("/accounts");
       setAccounts(data.data || []);
     } catch (err) {
+      if (err?.unauthorized) {
+        logout();
+        navigate("/login", { replace: true });
+        return;
+      }
       setError(err.message || "Error de conexión con el servidor.");
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [logout, navigate]);
 
   useEffect(() => {
     fetchAccounts();

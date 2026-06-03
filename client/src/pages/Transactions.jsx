@@ -1,4 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { apiGet } from "../api";
+import { useAuth } from "../context/AuthContext";
 
 const TYPE_LABELS = {
   credit: "Depósito",
@@ -30,7 +33,8 @@ export default function Transactions() {
   const [error, setError] = useState("");
   const [filter, setFilter] = useState("all");
 
-  const token = localStorage.getItem("banco_token");
+  const { logout } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const loadTransactions = async () => {
@@ -38,17 +42,14 @@ export default function Transactions() {
       setError("");
 
       try {
-        const response = await fetch("/api/transactions", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-          throw new Error(data.message || "No se pudieron cargar los movimientos.");
-        }
-
+        const data = await apiGet("/transactions");
         setTransactions(data.data || []);
       } catch (err) {
+        if (err?.unauthorized) {
+          logout();
+          navigate("/login", { replace: true });
+          return;
+        }
         setError(err.message || "Error de conexión con el servidor.");
       } finally {
         setLoading(false);
@@ -56,7 +57,7 @@ export default function Transactions() {
     };
 
     loadTransactions();
-  }, [token]);
+  }, [logout, navigate]);
 
   const filteredTransactions = useMemo(() => {
     if (filter === "all") return transactions;
