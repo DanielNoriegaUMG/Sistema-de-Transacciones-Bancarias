@@ -150,7 +150,7 @@ export default function Login() {
           <form onSubmit={handleSubmit} style={s.form} noValidate>
             {/* Usuario */}
             <div style={s.field}>
-              <label style={s.label}>Usuario</label>
+              <label htmlFor="username" style={s.label}>Usuario</label>
               <div style={s.inputRow}>
                 <span style={s.inputIcon}>
                   <svg
@@ -168,6 +168,7 @@ export default function Login() {
                   </svg>
                 </span>
                 <input
+                  id="username"
                   style={s.input}
                   type="text"
                   name="username"
@@ -182,7 +183,7 @@ export default function Login() {
 
             {/* Contraseña */}
             <div style={s.field}>
-              <label style={s.label}>Contraseña</label>
+              <label htmlFor="password" style={s.label}>Contraseña</label>
               <div style={s.inputRow}>
                 <span style={s.inputIcon}>
                   <svg
@@ -200,6 +201,7 @@ export default function Login() {
                   </svg>
                 </span>
                 <input
+                  id="password"
                   style={{ ...s.input, paddingRight: 46 }}
                   type={showPass ? "text" : "password"}
                   name="password"
@@ -215,6 +217,7 @@ export default function Login() {
                   style={s.eyeBtn}
                   onClick={() => setShowPass((v) => !v)}
                   tabIndex={-1}
+                  aria-label={showPass ? "Ocultar" : "Mostrar"}
                   title={showPass ? "Ocultar" : "Mostrar"}
                 >
                   {showPass ? (
