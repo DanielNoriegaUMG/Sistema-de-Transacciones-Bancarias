@@ -60,7 +60,7 @@ export default function Dashboard() {
     };
 
     loadData();
-  }, [token]);
+  }, [logout, navigate]);
 
   const summary = useMemo(() => {
     const totalBalance = accounts.reduce((sum, account) => sum + Number(account.balance || 0), 0);

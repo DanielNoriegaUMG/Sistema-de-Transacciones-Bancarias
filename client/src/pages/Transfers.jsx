@@ -70,7 +70,7 @@ export default function Transfers() {
     } finally {
       setLoading(false);
     }
-  }, [token, form.fromAccountId]);
+  }, [form.fromAccountId, logout, navigate]);
 
   useEffect(() => {
     fetchData();
@@ -103,7 +103,7 @@ export default function Transfers() {
 
     setSubmitting(true);
     try {
-      const data = await apiPost("/transfers", {
+      await apiPost("/transfers", {
         fromAccountId: Number(form.fromAccountId),
         toAccountId: Number(form.toAccountId),
         amount,
