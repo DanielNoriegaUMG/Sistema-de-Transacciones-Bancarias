@@ -5,7 +5,6 @@
   padding: 0;
   box-sizing: border-box;
 }
-
 :root {
   /* Paleta principal */
   --navy-950: #050d1a;
@@ -13,41 +12,33 @@
   --navy-800: #0f2040;
   --navy-700: #163058;
   --navy-600: #1e4080;
-
   /* Acento dorado */
   --accent-gold: #c9a84c;
   --accent-gold-light: #e8c870;
   --accent-gold-dim: rgba(201, 168, 76, 0.15);
-
   /* Superficies */
   --surface: #0d1e36;
   --surface-2: #122540;
   --surface-3: #172e50;
-
   /* Textos */
   --text-primary: #f0f4ff;
   --text-secondary: #8fa3c0;
   --text-muted: #4a6585;
-
   /* Bordes */
   --border: rgba(255, 255, 255, 0.07);
   --border-accent: rgba(201, 168, 76, 0.3);
-
   /* Semánticos */
   --success: #2dd4a0;
   --error: #f05a5a;
   --warning: #f0a030;
-
   /* Layout */
   --sidebar-w: 260px;
   --radius: 12px;
   --radius-sm: 8px;
-
   /* Sombras */
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
   --shadow-gold: 0 0 30px rgba(201, 168, 76, 0.12);
 }
-
 html,
 body,
 #root {
@@ -58,7 +49,6 @@ body,
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
-
 a {
   text-decoration: none;
   color: inherit;
@@ -71,7 +61,6 @@ input,
 button {
   outline: none;
 }
-
 /* Scrollbar personalizado */
 ::-webkit-scrollbar {
   width: 6px;
@@ -85,4 +74,12 @@ button {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--accent-gold-dim);
+}
+/* Animaciones */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
